@@ -16,6 +16,23 @@ cmds = ["mkdir -p data"]
 [start]
 cmd = "php -S 0.0.0.0:${PORT:-8000}"
 
+// Vercel specific: Handle port
+$port = $_ENV['PORT'] ?? 8000;
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once 'db.php';
+
+try {
+    $db = new Database();
+    $transactions = $db->getTransactions();
+    $balance = $db->getBalance();
+    $income = $db->getIncome();
+    $expenses = $db->getExpenses();
+} catch (Exception $e) {
+    die("Database error: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>

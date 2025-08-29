@@ -3,12 +3,10 @@ class Database {
     private $db;
     
     public function __construct() {
-        // Use Railway's persistent directory for SQLite
-        $dbPath = $_ENV['RAILWAY_VOLUME_PATH'] ?? __DIR__ . '/data';
-        if (!file_exists($dbPath)) {
-            mkdir($dbPath, 0777, true);
-        }
-        $this->db = new SQLite3($dbPath . '/finance.db');
+        // For Vercel, we'll use /tmp directory (but data won't persist)
+        // For production, consider using a proper database service
+        $dbPath = '/tmp/finance.db';
+        $this->db = new SQLite3($dbPath);
         $this->createTables();
     }
     
@@ -24,7 +22,7 @@ class Database {
         $this->db->exec($sql);
     }
     
-    // ... rest of the methods remain the same
+    // ... rest of your methods remain the same
     public function addTransaction($type, $amount, $description, $category) {
         $stmt = $this->db->prepare("INSERT INTO transactions (type, amount, description, category) VALUES (?, ?, ?, ?)");
         $stmt->bindValue(1, $type, SQLITE3_TEXT);
