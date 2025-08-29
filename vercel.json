@@ -6,17 +6,17 @@
       "use": "@vercel/php@0.6.0"
     },
     {
-      "src": "api/*.php",
+      "src": "add_transaction.php",
       "use": "@vercel/php@0.6.0"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1.php"
+      "src": "/add_transaction",
+      "dest": "/add_transaction.php"
     },
     {
-      "src": "/(.*)",
+      "src": "/",
       "dest": "/index.php"
     }
   ]
