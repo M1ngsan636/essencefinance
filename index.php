@@ -14,7 +14,6 @@ try {
     die("Database error: " . $e->getMessage());
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,7 +101,6 @@ try {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (isset($transactions)): ?>
                     <?php foreach ($transactions as $transaction): ?>
                     <tr>
                         <td><?php echo htmlspecialchars($transaction['date']); ?></td>
@@ -118,7 +116,6 @@ try {
                         </td>
                     </tr>
                     <?php endforeach; ?>
-                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
