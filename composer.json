@@ -1,0 +1,9 @@
+{
+    "name": "finance-tracker-app",
+    "description": "Essence Finance Tracker",
+    "type": "project",
+    "require": {
+        "php": ">=8.0"
+    },
+    "license": "MIT"
+}
