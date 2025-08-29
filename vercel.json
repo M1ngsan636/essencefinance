@@ -4,19 +4,11 @@
     {
       "src": "index.php",
       "use": "@vercel/php"
-    },
-    {
-      "src": "add_transaction.php",
-      "use": "@vercel/php"
     }
   ],
   "routes": [
     {
-      "src": "/add_transaction",
-      "dest": "/add_transaction.php"
-    },
-    {
-      "src": "/",
+      "src": "/(.*)",
       "dest": "/index.php"
     }
   ]
