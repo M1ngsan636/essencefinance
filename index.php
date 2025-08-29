@@ -102,21 +102,23 @@ try {
                     </tr>
                 </thead>
                 <tbody>
+                    <?php if (isset($transactions)): ?>
                     <?php foreach ($transactions as $transaction): ?>
                     <tr>
-                        <td><?php echo $transaction['date']; ?></td>
+                        <td><?php echo htmlspecialchars($transaction['date']); ?></td>
                         <td>
-                            <span class="type-badge <?php echo $transaction['type']; ?>">
-                                <?php echo ucfirst($transaction['type']); ?>
+                            <span class="type-badge <?php echo htmlspecialchars($transaction['type']); ?>">
+                                <?php echo ucfirst(htmlspecialchars($transaction['type'])); ?>
                             </span>
                         </td>
-                        <td><?php echo ucfirst($transaction['category']); ?></td>
+                        <td><?php echo ucfirst(htmlspecialchars($transaction['category'])); ?></td>
                         <td><?php echo htmlspecialchars($transaction['description']); ?></td>
-                        <td class="<?php echo $transaction['type']; ?>">
+                        <td class="<?php echo htmlspecialchars($transaction['type']); ?>">
                             $<?php echo number_format($transaction['amount'], 2); ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
