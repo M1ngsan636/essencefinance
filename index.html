@@ -161,6 +161,12 @@
             border-radius: 5px;
             margin: 20px 0;
         }
+        .retry-btn {
+            background: #f39c12;
+        }
+        .retry-btn:hover {
+            background: #e67e22;
+        }
         @media print {
             body * {
                 visibility: hidden;
@@ -219,7 +225,7 @@
             <button id="sync-data">🔄 Sinkronisasi Data</button>
             <button id="export-csv" class="export-btn">💾 Export ke CSV</button>
             <button id="test-connection">🧪 Test Koneksi</button>
-            <button id="init-sheet">📋 Inisialisasi Sheet</button>
+            <button id="retry-save" class="retry-btn" style="display:none;">🔁 Coba Lagi Simpan</button>
         </div>
     </div>
 
@@ -288,6 +294,7 @@
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7qbTqoGzuRjO7SYNuTAGunhDgnMl3ZYJbAy5ReW-FhumsWoGXiA0Zuj65xIJi4IFn8Q/exec';
         
         let transactions = [];
+        let pendingTransaction = null;
         
         // Set today's date as default
         document.getElementById('date').valueAsDate = new Date();
@@ -308,8 +315,8 @@
             debugDiv.style.display = 'block';
         }
         
-        // Save to Google Sheets
-        async function saveToGoogleSheets(transaction) {
+        // Save to Google Sheets with retry mechanism
+        async function saveToGoogleSheets(transaction, retryCount = 3) {
             try {
                 showDebugInfo('Mengirim data ke Google Sheets...');
                 
@@ -319,8 +326,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    // Add timeout
-                    signal: AbortSignal.timeout(10000) // 10 second timeout
+                    signal: AbortSignal.timeout(15000) // 15 second timeout
                 });
                 
                 showDebugInfo('Status respons: ' + response.status);
@@ -334,6 +340,7 @@
                 
                 if (result.result === 'success') {
                     showStatus('Data berhasil disimpan ke Google Sheets!', 'success');
+                    document.getElementById('retry-save').style.display = 'none';
                     return true;
                 } else {
                     throw new Error(result.message || 'Unknown error from server');
@@ -341,10 +348,30 @@
             } catch (error) {
                 console.error('Error saving to Google Sheets:', error);
                 showDebugInfo('Error: ' + error.message);
-                showStatus('Gagal menyimpan ke Google Sheets. Data disimpan lokal.', 'error');
-                return false;
+                
+                if (retryCount > 0) {
+                    showStatus(`Gagal menyimpan. Mencoba lagi... (${retryCount} percobaan tersisa)`, 'error');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    return saveToGoogleSheets(transaction, retryCount - 1);
+                } else {
+                    showStatus('Gagal menyimpan ke Google Sheets. Data disimpan lokal.', 'error');
+                    pendingTransaction = transaction;
+                    document.getElementById('retry-save').style.display = 'block';
+                    return false;
+                }
             }
         }
+        
+        // Retry save button
+        document.getElementById('retry-save').addEventListener('click', async function() {
+            if (pendingTransaction) {
+                const saved = await saveToGoogleSheets(pendingTransaction);
+                if (saved) {
+                    pendingTransaction = null;
+                    this.style.display = 'none';
+                }
+            }
+        });
         
         // Test connection
         document.getElementById('test-connection').addEventListener('click', async function() {
@@ -363,26 +390,12 @@
             }
         });
         
-        // Initialize sheet
-        document.getElementById('init-sheet').addEventListener('click', async function() {
-            try {
-                showDebugInfo('Initializing sheet...');
-                // This would require a special endpoint in your Apps Script
-                // For now, we'll just show instructions
-                alert('Buka Google Apps Script dan jalankan fungsi "initializeSheet" secara manual');
-            } catch (error) {
-                console.error('Init sheet failed:', error);
-                showDebugInfo('Init failed: ' + error.message);
-                alert('Gagal menginisialisasi sheet: ' + error.message);
-            }
-        });
-        
         // Load from Google Sheets
         async function loadFromGoogleSheets() {
             try {
                 showDebugInfo('Memuat data dari Google Sheets...');
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    signal: AbortSignal.timeout(10000)
+                    signal: AbortSignal.timeout(15000)
                 });
                 
                 if (!response.ok) {
