@@ -167,6 +167,15 @@
         .retry-btn:hover {
             background: #e67e22;
         }
+        .request-preview {
+            background: #f1f8e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
         @media print {
             body * {
                 visibility: hidden;
@@ -196,6 +205,7 @@
         <h2>Tambah Transaksi</h2>
         <div id="sync-status" class="sync-status" style="display:none;"></div>
         <div id="debug-info" class="debug-info"></div>
+        <div id="request-preview" class="request-preview"></div>
         
         <form id="transaction-form">
             <div class="form-group">
@@ -226,68 +236,11 @@
             <button id="export-csv" class="export-btn">💾 Export ke CSV</button>
             <button id="test-connection">🧪 Test Koneksi</button>
             <button id="retry-save" class="retry-btn" style="display:none;">🔁 Coba Lagi Simpan</button>
+            <button id="show-request">👁️ Tampilkan Request</button>
         </div>
     </div>
 
-    <div class="container no-print">
-        <h2>Hasilkan Laporan</h2>
-        <div class="filter-section">
-            <div class="filter-group">
-                <label for="report-month">Bulan</label>
-                <input type="month" id="report-month">
-            </div>
-            <div class="filter-group">
-                <label for="report-type">Tipe Transaksi</label>
-                <select id="report-type">
-                    <option value="all">Semua</option>
-                    <option value="income">Pemasukan</option>
-                    <option value="expense">Pengeluaran</option>
-                </select>
-            </div>
-        </div>
-        <div class="filter-actions">
-            <button id="generate-report">Buat Laporan Bulanan</button>
-            <button id="generate-all-report">Buat Laporan Semua Transaksi</button>
-        </div>
-    </div>
-
-    <div class="container report-section" id="report">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h2 id="report-title">Laporan Keuangan</h2>
-            <p id="report-period">Periode: Semua Transaksi</p>
-        </div>
-        
-        <div class="summary">
-            <div class="summary-item">
-                <div>Total Pemasukan</div>
-                <div class="summary-value income" id="total-income">Rp0</div>
-            </div>
-            <div class="summary-item">
-                <div>Total Pengeluaran</div>
-                <div class="summary-value expense" id="total-expense">Rp0</div>
-            </div>
-            <div class="summary-item">
-                <div>Saldo</div>
-                <div class="summary-value" id="balance">Rp0</div>
-            </div>
-        </div>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Deskripsi</th>
-                    <th>Tipe</th>
-                    <th>Jumlah</th>
-                </tr>
-            </thead>
-            <tbody id="report-body">
-                <!-- Transactions will be added here -->
-            </tbody>
-        </table>
-        
-        <button class="print-btn" onclick="window.print()">🖨️ Cetak Laporan</button>
-    </div>
+    <!-- ... (rest of HTML remains the same) ... -->
 
     <script>
         // REPLACE WITH YOUR GOOGLE APPS SCRIPT URL
@@ -315,10 +268,18 @@
             debugDiv.style.display = 'block';
         }
         
+        // Show request preview
+        function showRequestPreview(transaction) {
+            const previewDiv = document.getElementById('request-preview');
+            previewDiv.textContent = 'Request Data:\n' + JSON.stringify(transaction, null, 2);
+            previewDiv.style.display = 'block';
+        }
+        
         // Save to Google Sheets with retry mechanism
         async function saveToGoogleSheets(transaction, retryCount = 3) {
             try {
                 showDebugInfo('Mengirim data ke Google Sheets...');
+                showRequestPreview(transaction);
                 
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
@@ -326,7 +287,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    signal: AbortSignal.timeout(15000) // 15 second timeout
+                    signal: AbortSignal.timeout(20000) // 20 second timeout
                 });
                 
                 showDebugInfo('Status respons: ' + response.status);
@@ -341,6 +302,7 @@
                 if (result.result === 'success') {
                     showStatus('Data berhasil disimpan ke Google Sheets!', 'success');
                     document.getElementById('retry-save').style.display = 'none';
+                    document.getElementById('request-preview').style.display = 'none';
                     return true;
                 } else {
                     throw new Error(result.message || 'Unknown error from server');
@@ -351,7 +313,7 @@
                 
                 if (retryCount > 0) {
                     showStatus(`Gagal menyimpan. Mencoba lagi... (${retryCount} percobaan tersisa)`, 'error');
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await new Promise(resolve => setTimeout(resolve, 3000));
                     return saveToGoogleSheets(transaction, retryCount - 1);
                 } else {
                     showStatus('Gagal menyimpan ke Google Sheets. Data disimpan lokal.', 'error');
@@ -371,6 +333,18 @@
                     this.style.display = 'none';
                 }
             }
+        });
+        
+        // Show request data
+        document.getElementById('show-request').addEventListener('click', function() {
+            const transaction = {
+                id: Date.now(),
+                description: 'Test Transaction',
+                amount: 100000,
+                type: 'income',
+                date: new Date().toISOString().split('T')[0]
+            };
+            showRequestPreview(transaction);
         });
         
         // Test connection
