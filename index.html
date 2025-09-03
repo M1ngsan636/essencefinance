@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Keuangan Cluster Essence</title>
+    <title>Simple Expense Tracker - IDR</title>
     <style>
         * {
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         body {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f7fa;
@@ -57,6 +57,7 @@
             font-size: 16px;
             width: 100%;
             transition: background 0.3s;
+            margin-top: 10px;
         }
         button:hover {
             background: #2980b9;
@@ -91,9 +92,12 @@
             padding: 15px;
             background: #f8f9fa;
             border-radius: 5px;
+            flex-wrap: wrap;
         }
         .summary-item {
             text-align: center;
+            min-width: 150px;
+            margin: 5px;
         }
         .summary-value {
             font-size: 24px;
@@ -104,6 +108,24 @@
         }
         .print-btn:hover {
             background: #219653;
+        }
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .filter-actions button {
+            flex: 1;
         }
         @media print {
             body * {
@@ -126,23 +148,23 @@
 </head>
 <body>
     <header>
-        <h1>💰 Laporan Keuangan Cluster Essence 💰</h1>
-        <p>Track laporan keuangan Cluster Essence</p>
+        <h1>💰 Simple Expense Tracker</h1>
+        <p>Track your income and expenses (IDR)</p>
     </header>
 
     <div class="container no-print">
-        <h2>Buat Transaksi</h2>
+        <h2>Tambah Transaksi</h2>
         <form id="transaction-form">
             <div class="form-group">
-                <label for="description">Keterangan</label>
-                <input type="text" id="description" required placeholder="Gaji, Peralatan, dll.">
+                <label for="description">Deskripsi</label>
+                <input type="text" id="description" required placeholder="Gaji, Belanja, dll.">
             </div>
             <div class="form-group">
-                <label for="amount">Nominal (Rp.)</label>
+                <label for="amount">Jumlah (Rp)</label>
                 <input type="number" id="amount" required min="100" step="100" placeholder="0">
             </div>
             <div class="form-group">
-                <label for="type">Type</label>
+                <label for="type">Tipe</label>
                 <select id="type">
                     <option value="income">Pemasukan</option>
                     <option value="expense">Pengeluaran</option>
@@ -152,33 +174,50 @@
                 <label for="date">Tanggal</label>
                 <input type="date" id="date" required>
             </div>
-            <button type="submit">Confirm Transaksi</button>
+            <button type="submit">Tambah Transaksi</button>
         </form>
     </div>
 
     <div class="container no-print">
-        <h2>Buat Laporan</h2>
-        <button id="generate-report">Buat Laporan</button>
+        <h2>Hasilkan Laporan</h2>
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="report-month">Bulan</label>
+                <input type="month" id="report-month">
+            </div>
+            <div class="filter-group">
+                <label for="report-type">Tipe Transaksi</label>
+                <select id="report-type">
+                    <option value="all">Semua</option>
+                    <option value="income">Pemasukan</option>
+                    <option value="expense">Pengeluaran</option>
+                </select>
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button id="generate-report">Buat Laporan Bulanan</button>
+            <button id="generate-all-report">Buat Laporan Semua Transaksi</button>
+        </div>
     </div>
 
     <div class="container report-section" id="report">
         <div style="text-align: center; margin-bottom: 20px;">
-            <h2>Laporan Keuangan</h2>
-            <p>Dibuat tanggal: <span id="report-date"></span></p>
+            <h2 id="report-title">Laporan Keuangan</h2>
+            <p id="report-period">Periode: Semua Transaksi</p>
         </div>
         
         <div class="summary">
             <div class="summary-item">
                 <div>Total Pemasukan</div>
-                <div class="summary-value income" id="total-income">Rp. 0</div>
+                <div class="summary-value income" id="total-income">Rp0</div>
             </div>
             <div class="summary-item">
                 <div>Total Pengeluaran</div>
-                <div class="summary-value expense" id="total-expense">Rp. 0</div>
+                <div class="summary-value expense" id="total-expense">Rp0</div>
             </div>
             <div class="summary-item">
                 <div>Saldo</div>
-                <div class="summary-value" id="balance">Rp. 0</div>
+                <div class="summary-value" id="balance">Rp0</div>
             </div>
         </div>
         
@@ -186,9 +225,9 @@
             <thead>
                 <tr>
                     <th>Tanggal</th>
-                    <th>Keterangan</th>
-                    <th>Jenis Transaksi</th>
-                    <th>Nominal</th>
+                    <th>Deskripsi</th>
+                    <th>Tipe</th>
+                    <th>Jumlah</th>
                 </tr>
             </thead>
             <tbody id="report-body">
@@ -196,7 +235,7 @@
             </tbody>
         </table>
         
-        <button class="print-btn" onclick="window.print()">🖨️ Print Report</button>
+        <button class="print-btn" onclick="window.print()">🖨️ Cetak Laporan</button>
     </div>
 
     <script>
@@ -205,6 +244,15 @@
         
         // Set today's date as default
         document.getElementById('date').valueAsDate = new Date();
+        
+        // Format currency in IDR
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
         
         // Handle form submission
         document.getElementById('transaction-form').addEventListener('submit', function(e) {
@@ -223,30 +271,83 @@
             this.reset();
             document.getElementById('date').valueAsDate = new Date();
             
-            alert('Transaction added successfully!');
+            alert('Transaksi berhasil ditambahkan!');
         });
         
-        // Generate report
+        // Generate monthly report
         document.getElementById('generate-report').addEventListener('click', function() {
+            const month = document.getElementById('report-month').value;
+            const type = document.getElementById('report-type').value;
+            
+            if (!month) {
+                alert('Silakan pilih bulan terlebih dahulu!');
+                return;
+            }
+            
+            const [year, monthNum] = month.split('-');
+            const monthName = new Date(year, monthNum - 1).toLocaleDateString('id-ID', { month: 'long' });
+            
+            generateReport({
+                month: parseInt(monthNum),
+                year: parseInt(year),
+                type: type,
+                title: `Laporan ${type === 'all' ? 'Semua Transaksi' : (type === 'income' ? 'Pemasukan' : 'Pengeluaran')}`,
+                period: `${monthName} ${year}`
+            });
+        });
+        
+        // Generate all transactions report
+        document.getElementById('generate-all-report').addEventListener('click', function() {
+            const type = document.getElementById('report-type').value;
+            
+            generateReport({
+                type: type,
+                title: `Laporan ${type === 'all' ? 'Semua Transaksi' : (type === 'income' ? 'Pemasukan' : 'Pengeluaran')}`,
+                period: 'Semua Transaksi'
+            });
+        });
+        
+        // Generate report function
+        function generateReport(options) {
             const reportSection = document.getElementById('report');
             const reportBody = document.getElementById('report-body');
-            const reportDate = document.getElementById('report-date');
+            const reportTitle = document.getElementById('report-title');
+            const reportPeriod = document.getElementById('report-period');
             
             // Show report section
             reportSection.style.display = 'block';
             
-            // Set report date
-            reportDate.textContent = new Date().toLocaleDateString();
+            // Set report title and period
+            reportTitle.textContent = options.title;
+            reportPeriod.textContent = `Periode: ${options.period}`;
             
             // Clear previous report
             reportBody.innerHTML = '';
+            
+            // Filter transactions
+            let filteredTransactions = [...transactions];
+            
+            if (options.month && options.year) {
+                filteredTransactions = filteredTransactions.filter(t => {
+                    const transactionDate = new Date(t.date);
+                    return transactionDate.getMonth() + 1 === options.month && 
+                           transactionDate.getFullYear() === options.year;
+                });
+            }
+            
+            if (options.type !== 'all') {
+                filteredTransactions = filteredTransactions.filter(t => t.type === options.type);
+            }
+            
+            // Sort by date (newest first)
+            filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             // Calculate totals
             let totalIncome = 0;
             let totalExpense = 0;
             
             // Add transactions to report
-            transactions.forEach(transaction => {
+            filteredTransactions.forEach(transaction => {
                 const row = document.createElement('tr');
                 
                 if (transaction.type === 'income') {
@@ -258,21 +359,28 @@
                 row.innerHTML = `
                     <td>${formatDate(transaction.date)}</td>
                     <td>${transaction.description}</td>
-                    <td class="${transaction.type}">${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</td>
-                    <td class="${transaction.type}">$${transaction.amount.toFixed(2)}</td>
+                    <td class="${transaction.type}">${transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</td>
+                    <td class="${transaction.type}">${formatRupiah(transaction.amount)}</td>
                 `;
                 
                 reportBody.appendChild(row);
             });
             
-            // Update summary
-            document.getElementById('total-income').textContent = `$${totalIncome.toFixed(2)}`;
-            document.getElementById('total-expense').textContent = `$${totalExpense.toFixed(2)}`;
-            document.getElementById('balance').textContent = `$${(totalIncome - totalExpense).toFixed(2)}`;
+            // Update summary with IDR formatting
+            document.getElementById('total-income').textContent = formatRupiah(totalIncome);
+            document.getElementById('total-expense').textContent = formatRupiah(totalExpense);
+            document.getElementById('balance').textContent = formatRupiah(totalIncome - totalExpense);
+            
+            // Show message if no transactions
+            if (filteredTransactions.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" style="text-align: center;">Tidak ada transaksi ditemukan</td>`;
+                reportBody.appendChild(row);
+            }
             
             // Scroll to report
             reportSection.scrollIntoView({ behavior: 'smooth' });
-        });
+        }
         
         // Helper functions
         function saveTransactions() {
@@ -280,8 +388,8 @@
         }
         
         function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString(undefined, options);
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
         }
     </script>
 </body>
