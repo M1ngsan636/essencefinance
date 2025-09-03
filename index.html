@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Expense Tracker</title>
+    <title>Laporan Keuangan Cluster Essence</title>
     <style>
         * {
             box-sizing: border-box;
@@ -126,69 +126,69 @@
 </head>
 <body>
     <header>
-        <h1>💰 Simple Expense Tracker</h1>
-        <p>Track your income and expenses</p>
+        <h1>💰 Laporan Keuangan Cluster Essence 💰</h1>
+        <p>Track laporan keuangan Cluster Essence</p>
     </header>
 
     <div class="container no-print">
-        <h2>Add Transaction</h2>
+        <h2>Buat Transaksi</h2>
         <form id="transaction-form">
             <div class="form-group">
-                <label for="description">Description</label>
-                <input type="text" id="description" required placeholder="Salary, Groceries, etc.">
+                <label for="description">Keterangan</label>
+                <input type="text" id="description" required placeholder="Gaji, Peralatan, dll.">
             </div>
             <div class="form-group">
-                <label for="amount">Amount ($)</label>
-                <input type="number" id="amount" required min="0.01" step="0.01" placeholder="0.00">
+                <label for="amount">Nominal (Rp.)</label>
+                <input type="number" id="amount" required min="100" step="100" placeholder="0">
             </div>
             <div class="form-group">
                 <label for="type">Type</label>
                 <select id="type">
-                    <option value="income">Income</option>
-                    <option value="expense">Expense</option>
+                    <option value="income">Pemasukan</option>
+                    <option value="expense">Pengeluaran</option>
                 </select>
             </div>
             <div class="form-group">
-                <label for="date">Date</label>
+                <label for="date">Tanggal</label>
                 <input type="date" id="date" required>
             </div>
-            <button type="submit">Add Transaction</button>
+            <button type="submit">Confirm Transaksi</button>
         </form>
     </div>
 
     <div class="container no-print">
-        <h2>Generate Report</h2>
-        <button id="generate-report">Create Report</button>
+        <h2>Buat Laporan</h2>
+        <button id="generate-report">Buat Laporan</button>
     </div>
 
     <div class="container report-section" id="report">
         <div style="text-align: center; margin-bottom: 20px;">
-            <h2>Financial Report</h2>
-            <p>Generated on: <span id="report-date"></span></p>
+            <h2>Laporan Keuangan</h2>
+            <p>Dibuat tanggal: <span id="report-date"></span></p>
         </div>
         
         <div class="summary">
             <div class="summary-item">
-                <div>Total Income</div>
-                <div class="summary-value income" id="total-income">$0.00</div>
+                <div>Total Pemasukan</div>
+                <div class="summary-value income" id="total-income">Rp. 0</div>
             </div>
             <div class="summary-item">
-                <div>Total Expenses</div>
-                <div class="summary-value expense" id="total-expense">$0.00</div>
+                <div>Total Pengeluaran</div>
+                <div class="summary-value expense" id="total-expense">Rp. 0</div>
             </div>
             <div class="summary-item">
-                <div>Balance</div>
-                <div class="summary-value" id="balance">$0.00</div>
+                <div>Saldo</div>
+                <div class="summary-value" id="balance">Rp. 0</div>
             </div>
         </div>
         
         <table>
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Type</th>
-                    <th>Amount</th>
+                    <th>Tanggal</th>
+                    <th>Keterangan</th>
+                    <th>Jenis Transaksi</th>
+                    <th>Nominal</th>
                 </tr>
             </thead>
             <tbody id="report-body">
