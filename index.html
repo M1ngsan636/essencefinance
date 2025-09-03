@@ -240,11 +240,69 @@
         </div>
     </div>
 
-    <!-- ... (rest of HTML remains the same) ... -->
+    <div class="container no-print">
+        <h2>Hasilkan Laporan</h2>
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="report-month">Bulan</label>
+                <input type="month" id="report-month">
+            </div>
+            <div class="filter-group">
+                <label for="report-type">Tipe Transaksi</label>
+                <select id="report-type">
+                    <option value="all">Semua</option>
+                    <option value="income">Pemasukan</option>
+                    <option value="expense">Pengeluaran</option>
+                </select>
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button id="generate-report">Buat Laporan Bulanan</button>
+            <button id="generate-all-report">Buat Laporan Semua Transaksi</button>
+        </div>
+    </div>
+
+    <div class="container report-section" id="report">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 id="report-title">Laporan Keuangan</h2>
+            <p id="report-period">Periode: Semua Transaksi</p>
+        </div>
+        
+        <div class="summary">
+            <div class="summary-item">
+                <div>Total Pemasukan</div>
+                <div class="summary-value income" id="total-income">Rp0</div>
+            </div>
+            <div class="summary-item">
+                <div>Total Pengeluaran</div>
+                <div class="summary-value expense" id="total-expense">Rp0</div>
+            </div>
+            <div class="summary-item">
+                <div>Saldo</div>
+                <div class="summary-value" id="balance">Rp0</div>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Deskripsi</th>
+                    <th>Tipe</th>
+                    <th>Jumlah</th>
+                </tr>
+            </thead>
+            <tbody id="report-body">
+                <!-- Transactions will be added here -->
+            </tbody>
+        </table>
+        
+        <button class="print-btn" onclick="window.print()">🖨️ Cetak Laporan</button>
+    </div>
 
     <script>
         // REPLACE WITH YOUR GOOGLE APPS SCRIPT URL
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7qbTqoGzuRjO7SYNuTAGunhDgnMl3ZYJbAy5ReW-FhumsWoGXiA0Zuj65xIJi4IFn8Q/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytNuEp6XVDTj7v-E2Xl_p27aYCPu-2ElopquwMxd_uIfl2Zo1OejTRSHSVe3B0TVMQ4g/exec';
         
         let transactions = [];
         let pendingTransaction = null;
@@ -275,19 +333,24 @@
             previewDiv.style.display = 'block';
         }
         
-        // Save to Google Sheets with retry mechanism
+        // Save to Google Sheets using form parameters
         async function saveToGoogleSheets(transaction, retryCount = 3) {
             try {
                 showDebugInfo('Mengirim data ke Google Sheets...');
                 showRequestPreview(transaction);
                 
+                // Create form data
+                const formData = new FormData();
+                formData.append('id', transaction.id);
+                formData.append('description', transaction.description);
+                formData.append('amount', transaction.amount);
+                formData.append('type', transaction.type);
+                formData.append('date', transaction.date);
+                
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    body: JSON.stringify(transaction),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    signal: AbortSignal.timeout(20000) // 20 second timeout
+                    body: formData,
+                    // Remove Content-Type header to let browser set it with boundary
                 });
                 
                 showDebugInfo('Status respons: ' + response.status);
