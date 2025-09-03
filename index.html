@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Keuangan</title>
+    <title>Expense Tracker - Google Sheets</title>
     <style>
         * {
             box-sizing: border-box;
@@ -168,8 +168,8 @@
 </head>
 <body>
     <header>
-        <h1>💰 Expense Tracker Cluster Essence</h1>
-        <p>Laporan Keuangan Cluster Essence V. 1.3</p>
+        <h1>💰 Expense Tracker with Google Sheets</h1>
+        <p>Data disimpan di Google Sheets</p>
     </header>
 
     <div class="container no-print">
@@ -262,7 +262,7 @@
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWgtMbDZBHTX7uaRcmXK2s0Ukm8t5C0mf7ZYecXg32JF0xBYOmwNe1GwrVCkYeIJ8FuQ/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFjA1Pn-CIvfTBbMzzmO0YJ52R9SH-HuWrj68Krf1Jxlkdqe2RzCCosBRK_hzj4w7RjQ/exec';
         
         let transactions = [];
         
@@ -289,11 +289,13 @@
                     }
                 });
                 
-                if (response.ok) {
+                const result = await response.json();
+                
+                if (result.result === 'success') {
                     showStatus('Data berhasil disimpan ke Google Sheets!', 'success');
                     return true;
                 } else {
-                    throw new Error('Failed to save');
+                    throw new Error(result.message || 'Unknown error');
                 }
             } catch (error) {
                 console.error('Error saving to Google Sheets:', error);
@@ -307,9 +309,17 @@
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL);
                 if (response.ok) {
-                    transactions = await response.json();
-                    showStatus('Data berhasil dimuat dari Google Sheets!', 'success');
-                    return transactions;
+                    const data = await response.json();
+                    if (Array.isArray(data)) {
+                        transactions = data;
+                        saveToLocal();
+                        showStatus('Data berhasil dimuat dari Google Sheets!', 'success');
+                        return transactions;
+                    } else {
+                        throw new Error('Invalid data format');
+                    }
+                } else {
+                    throw new Error('HTTP ' + response.status);
                 }
             } catch (error) {
                 console.error('Error loading from Google Sheets:', error);
