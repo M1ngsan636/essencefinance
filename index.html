@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Expense Tracker - IDR</title>
+    <title>Laporan Keuangan</title>
     <style>
         * {
             box-sizing: border-box;
@@ -127,6 +127,26 @@
         .filter-actions button {
             flex: 1;
         }
+        .sync-status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .sync-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .sync-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .export-btn {
+            background: #9b59b6;
+        }
+        .export-btn:hover {
+            background: #8e44ad;
+        }
         @media print {
             body * {
                 visibility: hidden;
@@ -148,12 +168,13 @@
 </head>
 <body>
     <header>
-        <h1>💰 Simple Expense Tracker</h1>
-        <p>Track your income and expenses (IDR)</p>
+        <h1>💰 Expense Tracker Cluster Essence</h1>
+        <p>Laporan Keuangan Cluster Essence V. 1.3</p>
     </header>
 
     <div class="container no-print">
         <h2>Tambah Transaksi</h2>
+        <div id="sync-status" class="sync-status" style="display:none;"></div>
         <form id="transaction-form">
             <div class="form-group">
                 <label for="description">Deskripsi</label>
@@ -176,6 +197,8 @@
             </div>
             <button type="submit">Tambah Transaksi</button>
         </form>
+        <button id="sync-data">🔄 Sinkronisasi Data</button>
+        <button id="export-csv" class="export-btn">💾 Export ke CSV</button>
     </div>
 
     <div class="container no-print">
@@ -239,8 +262,9 @@
     </div>
 
     <script>
-        // Initialize transactions array
-        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWgtMbDZBHTX7uaRcmXK2s0Ukm8t5C0mf7ZYecXg32JF0xBYOmwNe1GwrVCkYeIJ8FuQ/exec';
+        
+        let transactions = [];
         
         // Set today's date as default
         document.getElementById('date').valueAsDate = new Date();
@@ -254,8 +278,60 @@
             }).format(amount);
         }
         
+        // Save to Google Sheets
+        async function saveToGoogleSheets(transaction) {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(transaction),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    showStatus('Data berhasil disimpan ke Google Sheets!', 'success');
+                    return true;
+                } else {
+                    throw new Error('Failed to save');
+                }
+            } catch (error) {
+                console.error('Error saving to Google Sheets:', error);
+                showStatus('Gagal menyimpan ke Google Sheets. Data disimpan lokal.', 'error');
+                return false;
+            }
+        }
+        
+        // Load from Google Sheets
+        async function loadFromGoogleSheets() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL);
+                if (response.ok) {
+                    transactions = await response.json();
+                    showStatus('Data berhasil dimuat dari Google Sheets!', 'success');
+                    return transactions;
+                }
+            } catch (error) {
+                console.error('Error loading from Google Sheets:', error);
+                showStatus('Gagal memuat data dari Google Sheets.', 'error');
+                return [];
+            }
+        }
+        
+        // Show sync status
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('sync-status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'sync-status ' + (type === 'success' ? 'sync-success' : 'sync-error');
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+        
         // Handle form submission
-        document.getElementById('transaction-form').addEventListener('submit', function(e) {
+        document.getElementById('transaction-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const transaction = {
@@ -266,12 +342,51 @@
                 date: document.getElementById('date').value
             };
             
-            transactions.push(transaction);
-            saveTransactions();
-            this.reset();
-            document.getElementById('date').valueAsDate = new Date();
+            // Save to Google Sheets
+            const saved = await saveToGoogleSheets(transaction);
             
-            alert('Transaksi berhasil ditambahkan!');
+            if (saved) {
+                transactions.push(transaction);
+                saveToLocal();
+                this.reset();
+                document.getElementById('date').valueAsDate = new Date();
+                alert('Transaksi berhasil ditambahkan!');
+            }
+        });
+        
+        // Sync data button
+        document.getElementById('sync-data').addEventListener('click', async function() {
+            await loadFromGoogleSheets();
+            // Refresh report if visible
+            if (document.getElementById('report').style.display !== 'none') {
+                // Re-generate current report
+                document.getElementById('generate-report').click();
+            }
+        });
+        
+        // Export to CSV
+        document.getElementById('export-csv').addEventListener('click', function() {
+            if (transactions.length === 0) {
+                alert('Tidak ada data untuk diekspor');
+                return;
+            }
+            
+            // Create CSV content
+            let csvContent = "ID,Deskripsi,Jumlah,Tipe,Tanggal\n";
+            transactions.forEach(transaction => {
+                csvContent += `${transaction.id},"${transaction.description}",${transaction.amount},${transaction.type},${transaction.date}\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `expense-tracker-${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         });
         
         // Generate monthly report
@@ -383,14 +498,25 @@
         }
         
         // Helper functions
-        function saveTransactions() {
+        function saveToLocal() {
             localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+        
+        function loadFromLocal() {
+            const localData = localStorage.getItem('transactions');
+            if (localData) {
+                return JSON.parse(localData);
+            }
+            return [];
         }
         
         function formatDate(dateString) {
             const options = { day: 'numeric', month: 'short', year: 'numeric' };
             return new Date(dateString).toLocaleDateString('id-ID', options);
         }
+        
+        // Initialize
+        transactions = loadFromLocal();
     </script>
 </body>
 </html>
