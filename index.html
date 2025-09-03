@@ -286,6 +286,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>ID Transaksi</th>
                     <th>Tanggal</th>
                     <th>Deskripsi</th>
                     <th>Tipe</th>
@@ -302,7 +303,7 @@
 
     <script>
         // REPLACE WITH YOUR GOOGLE APPS SCRIPT URL
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytNuEp6XVDTj7v-E2Xl_p27aYCPu-2ElopquwMxd_uIfl2Zo1OejTRSHSVe3B0TVMQ4g/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdnq55oYhb9VWHSNE9TWlhgETN59gh8MBqwdj_SdDuX8zUicyBJE4zCcrvphh52MQX/exec';
         
         let transactions = [];
         let pendingTransaction = null;
@@ -349,8 +350,7 @@
                 
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    body: formData,
-                    // Remove Content-Type header to let browser set it with boundary
+                    body: formData
                 });
                 
                 showDebugInfo('Status respons: ' + response.status);
@@ -510,8 +510,8 @@
                 return;
             }
             
-            // Create CSV content
-            let csvContent = "ID,Deskripsi,Jumlah,Tipe,Tanggal\n";
+            // Create CSV content with Transaction ID column
+            let csvContent = "Transaction ID,Deskripsi,Jumlah,Tipe,Tanggal\n";
             transactions.forEach(transaction => {
                 csvContent += `${transaction.id},"${transaction.description}",${transaction.amount},${transaction.type},${transaction.date}\n`;
             });
@@ -611,6 +611,7 @@
                 }
                 
                 row.innerHTML = `
+                    <td>${transaction.id}</td>
                     <td>${formatDate(transaction.date)}</td>
                     <td>${transaction.description}</td>
                     <td class="${transaction.type}">${transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</td>
@@ -628,7 +629,7 @@
             // Show message if no transactions
             if (filteredTransactions.length === 0) {
                 const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="4" style="text-align: center;">Tidak ada transaksi ditemukan</td>`;
+                row.innerHTML = `<td colspan="5" style="text-align: center;">Tidak ada transaksi ditemukan</td>`;
                 reportBody.appendChild(row);
             }
             
