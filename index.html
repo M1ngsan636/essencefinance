@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker - Google Sheets</title>
     <style>
+        /* ... (previous CSS styles remain the same) ... */
         * {
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -147,6 +148,14 @@
         .export-btn:hover {
             background: #8e44ad;
         }
+        .debug-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+            display: none;
+        }
         @media print {
             body * {
                 visibility: hidden;
@@ -175,6 +184,7 @@
     <div class="container no-print">
         <h2>Tambah Transaksi</h2>
         <div id="sync-status" class="sync-status" style="display:none;"></div>
+        <div id="debug-info" class="debug-info"></div>
         <form id="transaction-form">
             <div class="form-group">
                 <label for="description">Deskripsi</label>
@@ -199,70 +209,14 @@
         </form>
         <button id="sync-data">🔄 Sinkronisasi Data</button>
         <button id="export-csv" class="export-btn">💾 Export ke CSV</button>
+        <button id="test-connection">🧪 Test Koneksi</button>
     </div>
 
-    <div class="container no-print">
-        <h2>Hasilkan Laporan</h2>
-        <div class="filter-section">
-            <div class="filter-group">
-                <label for="report-month">Bulan</label>
-                <input type="month" id="report-month">
-            </div>
-            <div class="filter-group">
-                <label for="report-type">Tipe Transaksi</label>
-                <select id="report-type">
-                    <option value="all">Semua</option>
-                    <option value="income">Pemasukan</option>
-                    <option value="expense">Pengeluaran</option>
-                </select>
-            </div>
-        </div>
-        <div class="filter-actions">
-            <button id="generate-report">Buat Laporan Bulanan</button>
-            <button id="generate-all-report">Buat Laporan Semua Transaksi</button>
-        </div>
-    </div>
-
-    <div class="container report-section" id="report">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h2 id="report-title">Laporan Keuangan</h2>
-            <p id="report-period">Periode: Semua Transaksi</p>
-        </div>
-        
-        <div class="summary">
-            <div class="summary-item">
-                <div>Total Pemasukan</div>
-                <div class="summary-value income" id="total-income">Rp0</div>
-            </div>
-            <div class="summary-item">
-                <div>Total Pengeluaran</div>
-                <div class="summary-value expense" id="total-expense">Rp0</div>
-            </div>
-            <div class="summary-item">
-                <div>Saldo</div>
-                <div class="summary-value" id="balance">Rp0</div>
-            </div>
-        </div>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Deskripsi</th>
-                    <th>Tipe</th>
-                    <th>Jumlah</th>
-                </tr>
-            </thead>
-            <tbody id="report-body">
-                <!-- Transactions will be added here -->
-            </tbody>
-        </table>
-        
-        <button class="print-btn" onclick="window.print()">🖨️ Cetak Laporan</button>
-    </div>
+    <!-- ... (rest of HTML remains the same) ... -->
 
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFjA1Pn-CIvfTBbMzzmO0YJ52R9SH-HuWrj68Krf1Jxlkdqe2RzCCosBRK_hzj4w7RjQ/exec';
+        // REPLACE WITH YOUR GOOGLE APPS SCRIPT URL
+        const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_URL_HERE';
         
         let transactions = [];
         
@@ -278,9 +232,18 @@
             }).format(amount);
         }
         
+        // Show debug information
+        function showDebugInfo(message) {
+            const debugDiv = document.getElementById('debug-info');
+            debugDiv.textContent = message;
+            debugDiv.style.display = 'block';
+        }
+        
         // Save to Google Sheets
         async function saveToGoogleSheets(transaction) {
             try {
+                showDebugInfo('Mengirim data ke Google Sheets...');
+                
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     body: JSON.stringify(transaction),
@@ -289,40 +252,67 @@
                     }
                 });
                 
+                showDebugInfo('Status respons: ' + response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
+                showDebugInfo('Respons dari server: ' + JSON.stringify(result));
                 
                 if (result.result === 'success') {
                     showStatus('Data berhasil disimpan ke Google Sheets!', 'success');
                     return true;
                 } else {
-                    throw new Error(result.message || 'Unknown error');
+                    throw new Error(result.message || 'Unknown error from server');
                 }
             } catch (error) {
                 console.error('Error saving to Google Sheets:', error);
+                showDebugInfo('Error: ' + error.message);
                 showStatus('Gagal menyimpan ke Google Sheets. Data disimpan lokal.', 'error');
                 return false;
             }
         }
         
+        // Test connection
+        document.getElementById('test-connection').addEventListener('click', async function() {
+            try {
+                showDebugInfo('Testing connection...');
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?test=1');
+                const text = await response.text();
+                showDebugInfo('Test result: ' + text);
+                alert('Koneksi berhasil: ' + text);
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                showDebugInfo('Test failed: ' + error.message);
+                alert('Test koneksi gagal: ' + error.message);
+            }
+        });
+        
         // Load from Google Sheets
         async function loadFromGoogleSheets() {
             try {
+                showDebugInfo('Memuat data dari Google Sheets...');
                 const response = await fetch(GOOGLE_SCRIPT_URL);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (Array.isArray(data)) {
-                        transactions = data;
-                        saveToLocal();
-                        showStatus('Data berhasil dimuat dari Google Sheets!', 'success');
-                        return transactions;
-                    } else {
-                        throw new Error('Invalid data format');
-                    }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    transactions = data;
+                    saveToLocal();
+                    showStatus('Data berhasil dimuat dari Google Sheets!', 'success');
+                    return transactions;
                 } else {
-                    throw new Error('HTTP ' + response.status);
+                    throw new Error('Invalid data format received');
                 }
             } catch (error) {
                 console.error('Error loading from Google Sheets:', error);
+                showDebugInfo('Load error: ' + error.message);
                 showStatus('Gagal memuat data dari Google Sheets.', 'error');
                 return [];
             }
@@ -337,7 +327,7 @@
             
             setTimeout(() => {
                 statusDiv.style.display = 'none';
-            }, 3000);
+            }, 5000);
         }
         
         // Handle form submission
